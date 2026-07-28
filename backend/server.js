@@ -217,8 +217,27 @@ if (fs.existsSync(frontendDistPath)) {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
+  console.warn('⚠️ WARNING: frontend/dist folder not found! Make sure "npm run build" runs during Render deployment.');
   app.get('/', (req, res) => {
-    res.send('AgriRent API is running...');
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>AgriRent Server</title></head>
+        <body style="font-family: system-ui, sans-serif; padding: 40px; line-height: 1.6; max-width: 600px; margin: auto;">
+          <h2>🌱 AgriRent API is running...</h2>
+          <p style="color: #666;">The static frontend build was not found in <code>frontend/dist</code>.</p>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 12px; margin-top: 20px;">
+            <h3 style="margin-top: 0; color: #166534;">How to load the website UI on Render:</h3>
+            <ol style="margin-bottom: 0; padding-left: 20px; color: #15803d;">
+              <li>Go to <strong>Render Dashboard &rarr; Your Service &rarr; Settings</strong>.</li>
+              <li>Set <strong>Build Command</strong> to: <code>npm run build</code></li>
+              <li>Set <strong>Start Command</strong> to: <code>npm run start</code></li>
+              <li>Click <strong>Manual Deploy &rarr; Clear Build Cache & Deploy</strong>.</li>
+            </ol>
+          </div>
+        </body>
+      </html>
+    `);
   });
 }
 
