@@ -5,6 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 import { User } from '../models.js';
 import { authMiddleware } from './authMiddleware.js';
 
@@ -33,6 +34,12 @@ const upload = multer({ storage });
 // Register Route
 router.post('/register', upload.single('profileImage'), async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({ 
+        message: 'Database not connected. Please set MONGODB_URI in Render Environment Variables.' 
+      });
+    }
+
     const { name, email, password, role, mobile, village } = req.body;
     if (!email || !password || !name) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
@@ -102,6 +109,12 @@ router.post('/register', upload.single('profileImage'), async (req, res) => {
 // Login Route
 router.post('/login', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(500).json({ 
+        message: 'Database not connected. Please set MONGODB_URI in Render Environment Variables.' 
+      });
+    }
+
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
