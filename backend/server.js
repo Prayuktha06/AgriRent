@@ -40,15 +40,14 @@ const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/agrirent'
 
 async function seedData() {
   try {
-    const demoEmails = ['owner@agrirent.com', 'farmer@agrirent.com', 'admin@agrirent.com'];
-    
-    // Always clear the demo users and listings first to guarantee password123 fits
-    await User.deleteMany({ email: { $in: demoEmails } });
-    await Equipment.deleteMany({});
-    await Review.deleteMany({});
+    // Only seed if no demo users exist to avoid wiping database on container restart
+    const existingDemoUser = await User.findOne({ email: 'owner@agrirent.com' });
+    if (existingDemoUser) {
+      console.log('Initial demo data already exists. Skipping seed.');
+      return;
+    }
 
-
-    console.log('Seeding initial agricultural data...');
+    console.log('Seeding initial agricultural demo data...');
 
     const salt = await bcrypt.genSalt(10);
     const defaultPassword = await bcrypt.hash('password123', salt);
@@ -195,8 +194,10 @@ mongoose.connect(mongoURI)
     await seedData();
   })
   .catch(err => {
-    console.error('MongoDB connection error:', err.message);
-    console.log('Running backend with memory-fallback simulated DB structure for resilience.');
+    console.error('CRITICAL: MongoDB connection error:', err.message);
+    if (!process.env.MONGODB_URI) {
+      console.error('PLEASE NOTE: MONGODB_URI is not set in environment variables! Make sure to set MONGODB_URI on Render dashboard.');
+    }
   });
 
 // Mount Routes
@@ -210,9 +211,10 @@ const frontendDistPath = path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDistPath)) {
   app.use(express.static(frontendDistPath));
   app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
-      res.sendFile(path.join(frontendDistPath, 'index.html'));
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return res.status(404).json({ message: 'Resource not found' });
     }
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
   app.get('/', (req, res) => {
