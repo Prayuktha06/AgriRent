@@ -1,12 +1,15 @@
 import express from 'express';
 import multer from 'multer';
-import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Equipment, Review, User } from '../models.js';
 import { authMiddleware } from './authMiddleware.js';
 
 const router = express.Router();
 
-const uploadDir = './uploads';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }

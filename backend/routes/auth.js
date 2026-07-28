@@ -4,13 +4,17 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { User } from '../models.js';
 import { authMiddleware } from './authMiddleware.js';
 
 const router = express.Router();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Ensure uploads folder exists
-const uploadDir = './uploads';
+const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -30,6 +34,10 @@ const upload = multer({ storage });
 router.post('/register', upload.single('profileImage'), async (req, res) => {
   try {
     const { name, email, password, role, mobile, village } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
     
     // Check if user exists
@@ -58,9 +66,9 @@ router.post('/register', upload.single('profileImage'), async (req, res) => {
       name,
       email: normalizedEmail,
       password: hashedPassword,
-      role,
-      mobile,
-      village,
+      role: role || 'Farmer',
+      mobile: mobile || '',
+      village: village || '',
       profileImage: profileImageUrl
     });
 
@@ -87,7 +95,7 @@ router.post('/register', upload.single('profileImage'), async (req, res) => {
     });
   } catch (error) {
     console.error('Register error:', error);
-    res.status(500).json({ message: 'Server error during registration' });
+    res.status(500).json({ message: error.message || 'Server error during registration' });
   }
 });
 
@@ -95,6 +103,10 @@ router.post('/register', upload.single('profileImage'), async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
 
     const user = await User.findOne({ email: normalizedEmail });
@@ -127,7 +139,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error during login' });
+    res.status(500).json({ message: error.message || 'Server error during login' });
   }
 });
 
