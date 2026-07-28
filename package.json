@@ -2,12 +2,9 @@
   "name": "agrirent-monorepo",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
   "scripts": {
-    "build": "npm install --include=dev --prefix backend && npm install --include=dev --prefix frontend && npm run build --prefix frontend",
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
     "start": "node backend/server.js"
   }
 }
